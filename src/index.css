@@ -1,0 +1,241 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Agricultural Design System - All colors, gradients, fonts, etc defined here */
+
+@layer base {
+  :root {
+    /* Agricultural Color Palette */
+    --background: 45 12% 97%;
+    --foreground: 120 8% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 120 8% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 120 8% 15%;
+
+    --primary: 120 85% 25%;
+    --primary-foreground: 0 0% 98%;
+    --primary-light: 120 50% 45%;
+    --primary-glow: 120 60% 60%;
+
+    --secondary: 45 15% 92%;
+    --secondary-foreground: 120 8% 15%;
+
+    --muted: 45 10% 95%;
+    --muted-foreground: 120 5% 45%;
+
+    --accent: 35 80% 65%;
+    --accent-foreground: 120 8% 15%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 120 10% 88%;
+    --input: 120 10% 88%;
+    --ring: 120 85% 25%;
+
+    --radius: 0.75rem;
+
+    /* Custom Agricultural Colors */
+    --earth: 35 25% 85%;
+    --earth-dark: 35 40% 65%;
+    --sage: 95 20% 75%;
+    --sage-dark: 95 30% 55%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-light)));
+    --gradient-earth: linear-gradient(135deg, hsl(var(--earth)), hsl(var(--earth-dark)));
+    --gradient-sage: linear-gradient(135deg, hsl(var(--sage)), hsl(var(--sage-dark)));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-light)) 50%, hsl(var(--primary-glow)) 100%);
+    
+    /* Shadows */
+    --shadow-soft: 0 4px 15px -4px hsl(var(--primary) / 0.1);
+    --shadow-glow: 0 0 25px hsl(var(--primary-glow) / 0.3);
+    --shadow-card: 0 8px 30px -8px hsl(120 20% 50% / 0.15);
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    /* Sidebar */
+    --sidebar-background: 120 25% 8%;
+    --sidebar-foreground: 120 15% 85%;
+    --sidebar-primary: 120 85% 25%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 120 20% 15%;
+    --sidebar-accent-foreground: 120 15% 85%;
+    --sidebar-border: 120 20% 20%;
+    --sidebar-ring: 120 85% 25%;
+  }
+
+  .dark {
+    --background: 120 25% 8%;
+    --foreground: 120 15% 85%;
+
+    --card: 120 20% 12%;
+    --card-foreground: 120 15% 85%;
+
+    --popover: 120 20% 12%;
+    --popover-foreground: 120 15% 85%;
+
+    --primary: 120 70% 40%;
+    --primary-foreground: 120 25% 8%;
+    --primary-light: 120 60% 55%;
+    --primary-glow: 120 65% 65%;
+
+    --secondary: 120 15% 18%;
+    --secondary-foreground: 120 15% 85%;
+
+    --muted: 120 15% 15%;
+    --muted-foreground: 120 10% 65%;
+
+    --accent: 35 70% 55%;
+    --accent-foreground: 120 15% 85%;
+
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 120 15% 85%;
+
+    --border: 120 15% 20%;
+    --input: 120 15% 20%;
+    --ring: 120 70% 40%;
+
+    --earth: 35 20% 25%;
+    --earth-dark: 35 30% 20%;
+    --sage: 95 15% 25%;
+    --sage-dark: 95 20% 20%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  /* Agricultural-themed component classes */
+  .agricultural-card {
+    @apply bg-card border border-border rounded-lg shadow-[var(--shadow-card)] transition-all duration-300 hover:shadow-[var(--shadow-soft)] hover:scale-[1.02];
+  }
+
+  .agricultural-button {
+    @apply bg-[var(--gradient-primary)] text-primary-foreground font-medium px-6 py-3 rounded-lg shadow-[var(--shadow-soft)] transition-all duration-300 hover:scale-105 hover:shadow-[var(--shadow-glow)] active:scale-95;
+  }
+
+  .agricultural-input {
+    @apply bg-background border border-input rounded-lg px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200;
+  }
+
+  .chat-bubble-user {
+    @apply bg-[var(--gradient-primary)] text-primary-foreground rounded-2xl rounded-br-md px-4 py-3 max-w-xs ml-auto shadow-[var(--shadow-soft)];
+  }
+
+  .chat-bubble-bot {
+    @apply bg-card text-card-foreground rounded-2xl rounded-bl-md px-4 py-3 max-w-xs mr-auto border border-border shadow-[var(--shadow-soft)];
+  }
+
+  .sidebar-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-200 cursor-pointer;
+  }
+
+  .sidebar-item-active {
+    @apply bg-sidebar-primary text-sidebar-primary-foreground shadow-[var(--shadow-soft)];
+  }
+}
+
+/* Animation keyframes */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes bounce {
+  0%, 20%, 53%, 80%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  40%, 43% {
+    transform: translate3d(0, -8px, 0);
+  }
+  70% {
+    transform: translate3d(0, -4px, 0);
+  }
+  90% {
+    transform: translate3d(0, -2px, 0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s ease-out;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.3s ease-out;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s ease-out;
+}
+
+.animate-bounce-subtle {
+  animation: bounce 0.6s ease-in-out;
+}
