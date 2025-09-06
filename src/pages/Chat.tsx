@@ -359,7 +359,8 @@ const Chat = () => {
   ): Promise<string> {
     return new Promise<string>((resolve) => {
       setTimeout(() => {
-        resolve("This is a placeholder response from backend.");
+
+        resolve("No response as NEEV MAKHA RHA HAI");
       }, 2000);
     });
   }
@@ -637,4 +638,6 @@ const Chat = () => {
   );
 };
 
+
 export default Chat;
+
