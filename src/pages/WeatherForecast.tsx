@@ -1,68 +1,142 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { 
-  MapPin, 
-  Thermometer, 
-  Droplets, 
-  Wind, 
-  Eye, 
-  Sun, 
-  Cloud, 
+import {
+  MapPin,
+  Droplets,
+  Wind,
+  Eye,
+  Sun,
+  Cloud,
   CloudRain,
   AlertTriangle,
   MessageCircle,
-  Navigation
+  Navigation,
 } from "lucide-react";
+
+const API_KEY = "94fcf5aaafc2d1c3f1d0c7e4b81a120d"; // <-- Replace with your OpenWeatherMap API key
 
 const WeatherForecast = () => {
   const [location, setLocation] = useState("");
   const [weatherData, setWeatherData] = useState({
     current: {
-      temperature: 28,
-      humidity: 65,
+      temperature: 0,
+      humidity: 0,
       rainfall: 0,
-      windSpeed: 12,
-      visibility: 10,
-      condition: "partly-cloudy"
+      windSpeed: 0,
+      visibility: 0,
+      condition: "sunny",
     },
-    forecast: [
-      { day: "Today", temp: { high: 32, low: 22 }, condition: "sunny", rain: 0 },
-      { day: "Tomorrow", temp: { high: 30, low: 20 }, condition: "cloudy", rain: 5 },
-      { day: "Wed", temp: { high: 25, low: 18 }, condition: "rainy", rain: 25 },
-      { day: "Thu", temp: { high: 27, low: 19 }, condition: "partly-cloudy", rain: 0 },
-      { day: "Fri", temp: { high: 29, low: 21 }, condition: "sunny", rain: 0 }
-    ],
-    alerts: [
-      {
-        type: "critical",
-        title: "Heavy Rain Alert",
-        message: "Moderate to heavy rainfall expected in the next 48 hours. Consider protecting sensitive crops and adjusting irrigation schedules.",
-        icon: <CloudRain className="w-5 h-5" />
-      }
-    ]
+    forecast: [] as any[],
+    alerts: [] as any[],
   });
 
+  // Get weather icon based on condition
   const getWeatherIcon = (condition: string, size = "w-8 h-8") => {
     switch (condition) {
       case "sunny":
+      case "clear":
         return <Sun className={`${size} text-orange-500`} />;
       case "cloudy":
+      case "clouds":
         return <Cloud className={`${size} text-gray-500`} />;
       case "partly-cloudy":
         return <Cloud className={`${size} text-blue-500`} />;
       case "rainy":
+      case "rain":
         return <CloudRain className={`${size} text-blue-600`} />;
       default:
         return <Sun className={`${size} text-orange-500`} />;
     }
   };
 
+  // Fetch current weather
+  const fetchWeather = async (lat: number, lon: number) => {
+    try {
+      const res = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=94fcf5aaafc2d1c3f1d0c7e4b81a120d`
+      );
+      const data = await res.json();
+
+      setWeatherData((prev) => ({
+        ...prev,
+        current: {
+          temperature: Math.round(data.main.temp),
+          humidity: data.main.humidity,
+          rainfall: data.rain ? data.rain["1h"] || 0 : 0,
+          windSpeed: data.wind.speed,
+          visibility: data.visibility / 1000,
+          condition: data.weather[0].main.toLowerCase(),
+        },
+      }));
+    } catch (err) {
+      console.error("Error fetching weather:", err);
+    }
+  };
+
+  // Fetch 7-day forecast
+  // const fetchForecast = async (lat: number, lon: number) => {
+  //   try {
+  //     const res = await fetch(
+  //       `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto`
+  //     );
+  //     const data = await res.json();
+
+  //   // Group 3-hourly data into days
+  //   const daily: Record<string, any[]> = {};
+  //   data.list.forEach((item: any) => {
+  //     const date = new Date(item.dt * 1000);
+  //     const dayKey = date.toLocaleDateString("en-US", { weekday: "short" });
+  //     if (!daily[dayKey]) daily[dayKey] = [];
+  //     daily[dayKey].push(item);
+  //   });
+
+    // Process each day's forecast
+const fetchForecast = async (lat: number, lon: number) => {
+  try {
+    const res = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto`
+    );
+    const data = await res.json();
+
+    if (!data.daily) {
+      console.error("Forecast API error:", data);
+      return;
+    }
+
+    const forecast = data.daily.time.map((date: string, idx: number) => {
+      const day = new Date(date);
+      return {
+        day: idx === 0 ? "Today" : day.toLocaleDateString("en-US", { weekday: "short" }),
+        temp: {
+          high: Math.round(data.daily.temperature_2m_max[idx]),
+          low: Math.round(data.daily.temperature_2m_min[idx]),
+        },
+        condition:
+          data.daily.precipitation_sum[idx] > 5
+            ? "rain"
+            : data.daily.precipitation_sum[idx] > 0
+            ? "clouds"
+            : "clear",
+        rain: Math.round(data.daily.precipitation_sum[idx]), // in mm
+      };
+    });
+
+    setWeatherData((prev) => ({
+      ...prev,
+      forecast,
+    }));
+  } catch (err) {
+    console.error("Error fetching forecast:", err);
+  }
+};
+  // Auto-detect location and fetch weather
   const getAutoLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition((position) => {
-        setLocation(`${position.coords.latitude}, ${position.coords.longitude}`);
-        // Here you would typically call a reverse geocoding API
-        console.log("Location:", position.coords);
+        const { latitude, longitude } = position.coords;
+        setLocation(`${latitude}, ${longitude}`);
+        fetchWeather(latitude, longitude);
+        fetchForecast(latitude, longitude);
       });
     }
   };
@@ -71,14 +145,8 @@ const WeatherForecast = () => {
     <div className="min-h-full bg-gradient-to-br from-orange-50 to-yellow-50 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            🌤️ Weather Forecasting
-          </h1>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">🌤️ Weather Forecasting</h1>
           <p className="text-xl text-muted-foreground max-w-2xl">
             Get accurate weather forecasts and agricultural insights to optimize your farming operations.
           </p>
@@ -123,7 +191,6 @@ const WeatherForecast = () => {
             {/* Current Conditions */}
             <div className="agricultural-card p-6">
               <h2 className="text-2xl font-semibold text-foreground mb-6">Current Weather</h2>
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Main Weather Display */}
                 <div className="flex items-center gap-6">
@@ -134,9 +201,7 @@ const WeatherForecast = () => {
                     <div className="text-4xl font-bold text-foreground mb-1">
                       {weatherData.current.temperature}°C
                     </div>
-                    <div className="text-muted-foreground capitalize">
-                      {weatherData.current.condition.replace('-', ' ')}
-                    </div>
+                    <div className="text-muted-foreground capitalize">{weatherData.current.condition}</div>
                   </div>
                 </div>
 
@@ -174,29 +239,23 @@ const WeatherForecast = () => {
               </div>
             </div>
 
-            {/* 5-Day Forecast */}
+            {/* 7-Day Forecast */}
             <div className="agricultural-card p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-6">5-Day Forecast</h2>
-              
+              <h2 className="text-2xl font-semibold text-foreground mb-6">7-Day Forecast</h2>
               <div className="space-y-4">
                 {weatherData.forecast.map((day, index) => (
                   <motion.div
-                    key={day.day}
+                    key={index}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.3 + index * 0.1 }}
                     className="flex items-center justify-between p-4 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-16 text-sm font-medium text-muted-foreground">
-                        {day.day}
-                      </div>
+                      <div className="w-16 text-sm font-medium text-muted-foreground">{day.day}</div>
                       {getWeatherIcon(day.condition, "w-6 h-6")}
-                      <div className="capitalize text-foreground">
-                        {day.condition.replace('-', ' ')}
-                      </div>
+                      <div className="capitalize text-foreground">{day.condition}</div>
                     </div>
-                    
                     <div className="flex items-center gap-6">
                       <div className="flex items-center gap-2 text-sm">
                         <Droplets className="w-4 h-4 text-blue-500" />
@@ -215,55 +274,10 @@ const WeatherForecast = () => {
           </motion.div>
 
           {/* Sidebar */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-            className="space-y-6"
-          >
-            {/* Weather Alerts */}
-            {weatherData.alerts.length > 0 && (
-              <div className="agricultural-card p-6 border-orange-200 bg-orange-50/50">
-                <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-3">
-                  <AlertTriangle className="w-5 h-5 text-orange-500" />
-                  Weather Alerts
-                </h3>
-                
-                <div className="space-y-4">
-                  {weatherData.alerts.map((alert, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.4 + index * 0.1 }}
-                      className={`
-                        p-4 rounded-lg border-l-4
-                        ${alert.type === 'critical' ? 'border-red-500 bg-red-50' : 'border-yellow-500 bg-yellow-50'}
-                      `}
-                    >
-                      <div className="flex items-start gap-3">
-                        {alert.icon}
-                        <div>
-                          <h4 className="font-medium text-foreground mb-1">
-                            {alert.title}
-                          </h4>
-                          <p className="text-sm text-muted-foreground">
-                            {alert.message}
-                          </p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            )}
-
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }} className="space-y-6">
             {/* AI Highlights */}
             <div className="agricultural-card p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">
-                AI Farming Insights
-              </h3>
-              
+              <h3 className="text-lg font-semibold text-foreground mb-4">AI Farming Insights</h3>
               <div className="space-y-4">
                 <div className="p-4 bg-blue-50 rounded-lg">
                   <h4 className="font-medium text-blue-800 mb-2">Irrigation Recommendation</h4>
@@ -271,14 +285,12 @@ const WeatherForecast = () => {
                     With upcoming rainfall, consider reducing irrigation by 30% for the next 3 days.
                   </p>
                 </div>
-                
                 <div className="p-4 bg-green-50 rounded-lg">
                   <h4 className="font-medium text-green-800 mb-2">Optimal Conditions</h4>
                   <p className="text-sm text-green-700">
                     Tomorrow's weather is ideal for fertilizer application before the rain.
                   </p>
                 </div>
-                
                 <div className="p-4 bg-yellow-50 rounded-lg">
                   <h4 className="font-medium text-yellow-800 mb-2">Pest Alert</h4>
                   <p className="text-sm text-yellow-700">
@@ -294,12 +306,10 @@ const WeatherForecast = () => {
                 <MessageCircle className="w-5 h-5 text-primary" />
                 Weather Specialist
               </h3>
-              
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
                   Get personalized weather advice for your specific crops and location.
                 </p>
-                
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
